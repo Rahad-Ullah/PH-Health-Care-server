@@ -42,7 +42,29 @@ const getAdminById = async (req: Request, res: Response) => {
   }
 };
 
+const updateAdmin = async (req: Request, res: Response) => {
+  try {
+    const result = await adminServices.updateAdminIntoDB(
+      req.params.id,
+      req.body
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Admin updated successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error?.name || "Something went wrong",
+      error: error,
+    });
+  }
+};
+
 export const adminControllers = {
   getAllAdmins,
   getAdminById,
+  updateAdmin,
 };
