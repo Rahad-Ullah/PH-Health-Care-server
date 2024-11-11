@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { adminServices } from "./admin.service";
 
-const createAdmin = async (req: Request, res: Response) => {
+const getAllAdmins = async (req: Request, res: Response) => {
   try {
-    const result = await adminServices.getAllAdminsFromDB();
+    const result = await adminServices.getAllAdminsFromDB(req.query);
     res.status(200).json({
       success: true,
       message: "Admin retrieved successfully",
@@ -19,5 +19,5 @@ const createAdmin = async (req: Request, res: Response) => {
 };
 
 export const adminControllers = {
-  createAdmin,
+  getAllAdmins,
 };
