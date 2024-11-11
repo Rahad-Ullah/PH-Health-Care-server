@@ -8,6 +8,7 @@ const getAllAdmins = async (req: Request, res: Response) => {
     const filters = pick(req.query, adminFilterableFields);
     const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
     const result = await adminServices.getAllAdminsFromDB(filters, options);
+
     res.status(200).json({
       success: true,
       message: "Admin retrieved successfully",
@@ -17,7 +18,25 @@ const getAllAdmins = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: error?.name || "Error creating admin",
+      message: error?.name || "Something went wrong",
+      error: error,
+    });
+  }
+};
+
+const getAdminById = async (req: Request, res: Response) => {
+  try {
+    const result = await adminServices.getAdminByIdFromDB(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Admin retrieved successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error?.name || "Something went wrong",
       error: error,
     });
   }
@@ -25,4 +44,5 @@ const getAllAdmins = async (req: Request, res: Response) => {
 
 export const adminControllers = {
   getAllAdmins,
+  getAdminById,
 };
