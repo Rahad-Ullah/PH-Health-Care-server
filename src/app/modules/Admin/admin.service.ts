@@ -1,8 +1,7 @@
-import { Admin, Prisma } from "@prisma/client";
+import { Admin, Prisma, UserStatus } from "@prisma/client";
 import { adminSearchableFields } from "./admin.constant";
 import { calculatePagination } from "../../../utils/pagination";
 import prisma from "../../../shared/prisma";
-import { resourceUsage } from "process";
 
 const getAllAdminsFromDB = async (params: any, options: any) => {
   const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
@@ -29,6 +28,10 @@ const getAllAdminsFromDB = async (params: any, options: any) => {
       })),
     });
   }
+
+  conditions.push({
+    isDeleted: false,
+  });
 
   const whereConditions: Prisma.AdminWhereInput = { AND: conditions };
 
@@ -58,6 +61,7 @@ const getAdminByIdFromDB = async (id: string) => {
   const result = await prisma.admin.findUnique({
     where: {
       id,
+      isDeleted: false,
     },
   });
   return result;
@@ -68,6 +72,7 @@ const updateAdminIntoDB = async (id: string, payload: Partial<Admin>) => {
   await prisma.admin.findUniqueOrThrow({
     where: {
       id,
+      isDeleted: false,
     },
   });
 
@@ -85,6 +90,7 @@ const deleteAdminFromDB = async (id: string) => {
   await prisma.admin.findUniqueOrThrow({
     where: {
       id,
+      isDeleted: false,
     },
   });
 
@@ -109,9 +115,46 @@ const deleteAdminFromDB = async (id: string) => {
   return result;
 };
 
+const softDeleteAdminFromDB = async (id: string) => {
+  // check if the admin is exist
+  await prisma.admin.findUniqueOrThrow({
+    where: {
+      id,
+      isDeleted: false,
+    },
+  });
+
+  const result = await prisma.$transaction(async (transactionClient) => {
+    // delete from admin table
+    const adminDeletedData = await transactionClient.admin.update({
+      where: {
+        id,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    // delete from user table
+    await transactionClient.user.update({
+      where: {
+        email: adminDeletedData.email,
+      },
+      data: {
+        status: UserStatus.DELETED,
+      },
+    });
+
+    return adminDeletedData;
+  });
+
+  return result;
+};
+
 export const adminServices = {
   getAllAdminsFromDB,
   getAdminByIdFromDB,
   updateAdminIntoDB,
   deleteAdminFromDB,
+  softDeleteAdminFromDB,
 };
