@@ -1,6 +1,8 @@
 import prisma from "../../../shared/prisma";
 import * as bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { jwtHelpers } from "../../../utils/jwtHelper";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { UserStatus } from "@prisma/client";
 
 const loginUserIntoDB = async (payload: {
   email: string;
@@ -9,6 +11,7 @@ const loginUserIntoDB = async (payload: {
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
       email: payload.email,
+      status: UserStatus.ACTIVE,
     },
   });
 
@@ -21,36 +24,67 @@ const loginUserIntoDB = async (payload: {
     throw new Error("Password incorrect`");
   }
 
-  const accessToekn = jwt.sign(
+  const accessToken = jwtHelpers.generateToken(
     {
       email: userData.email,
       role: userData.role,
       status: userData.status,
     },
     "abcdefgh",
-    {
-      expiresIn: "12 hours",
-    }
+    "1h"
   );
 
-  const refreshToekn = jwt.sign(
+  const refreshToken = jwtHelpers.generateToken(
     {
       email: userData.email,
       role: userData.role,
     },
-    "abcdefgh",
-    {
-      expiresIn: "30d",
-    }
+    "abcdefghijkl",
+    "30d"
   );
 
   return {
-    accessToekn,
-    refreshToekn,
+    accessToken,
+    refreshToken,
+    needPasswordChange: userData.needPasswordChange,
+  };
+};
+
+const refreshToken = async (token: string) => {
+  let decodedData;
+  try {
+    decodedData = jwtHelpers.verifyToken(token, "abcdefghijkl");
+  } catch (error) {
+    throw new Error("You are not authorized!");
+  }
+
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: decodedData.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  if (!userData) {
+    throw new Error("You are not authorized!");
+  }
+
+  const accessToken = jwtHelpers.generateToken(
+    {
+      email: userData.email,
+      role: userData.role,
+      status: userData.status,
+    },
+    "abcdefgh",
+    "1h"
+  );
+  return {
+    accessToken,
     needPasswordChange: userData.needPasswordChange,
   };
 };
 
 export const authServices = {
   loginUserIntoDB,
+  refreshToken,
 };
