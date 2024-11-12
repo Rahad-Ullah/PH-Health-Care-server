@@ -17,20 +17,38 @@ const loginUserIntoDB = async (payload: {
     userData.password
   );
 
-  if (isCorrectPassword) {
-    const accessToekn = jwt.sign(
-      {
-        email: userData.email,
-        role: userData.role,
-        status: userData.status,
-      },
-      "abcdefgh",
-      {
-        expiresIn: "12 hours",
-      }
-    );
-    console.log(accessToekn);
+  if (!isCorrectPassword) {
+    throw new Error("Password incorrect`");
   }
+
+  const accessToekn = jwt.sign(
+    {
+      email: userData.email,
+      role: userData.role,
+      status: userData.status,
+    },
+    "abcdefgh",
+    {
+      expiresIn: "12 hours",
+    }
+  );
+
+  const refreshToekn = jwt.sign(
+    {
+      email: userData.email,
+      role: userData.role,
+    },
+    "abcdefgh",
+    {
+      expiresIn: "30d",
+    }
+  );
+
+  return {
+    accessToekn,
+    refreshToekn,
+    needPasswordChange: userData.needPasswordChange,
+  };
 };
 
 export const authServices = {
