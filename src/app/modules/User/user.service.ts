@@ -1,10 +1,21 @@
 import { UserRole } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import prisma from "../../../shared/prisma";
+import ApiError from "../../errors/ApiError";
+import { StatusCodes } from "http-status-codes";
 
 const createAdminIntoDB = async (data: any) => {
+  // check if the user is already exist
+  const user = await prisma.user.findUnique({
+    where: {
+      email: data.admin.email,
+    },
+  });
+  if (user) {
+    throw new ApiError(StatusCodes.CONFLICT, "Admin already exists");
+  }
+
   const hashedPassword: string = await bcrypt.hash(data.password, 12);
-  console.log({ hashedPassword });
 
   const userData = {
     email: data.admin.email,
