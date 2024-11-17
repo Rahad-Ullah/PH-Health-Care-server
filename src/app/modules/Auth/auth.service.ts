@@ -5,6 +5,7 @@ import { UserStatus } from "@prisma/client";
 import config from "../../../config";
 import ApiError from "../../errors/ApiError";
 import { StatusCodes } from "http-status-codes";
+import { JwtPayload } from "jsonwebtoken";
 
 const loginUserIntoDB = async (payload: {
   email: string;
@@ -89,7 +90,43 @@ const refreshToken = async (token: string) => {
   };
 };
 
+// change password
+const changePassword = async (user: JwtPayload, payload: any) => {
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: user.email,
+    },
+  });
+
+  const isCorrectPassword = await bcrypt.compare(
+    payload.oldPassword,
+    userData.password
+  );
+
+  if (!isCorrectPassword) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Password incorrect");
+  }
+
+  const hashedPassword = await bcrypt.hash(payload.newPassword, 12);
+
+  await prisma.user.update({
+    where: {
+      email: userData.email,
+      status: UserStatus.ACTIVE,
+    },
+    data: {
+      password: hashedPassword,
+      needPasswordChange: false,
+    },
+  });
+
+  return {
+    message: "Password changed successfully",
+  };
+};
+
 export const authServices = {
   loginUserIntoDB,
   refreshToken,
+  changePassword,
 };
