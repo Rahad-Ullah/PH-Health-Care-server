@@ -6,8 +6,6 @@ import { fileUploader } from "../../../utils/fileUploader";
 
 const router = express.Router();
 
-
-
 router.post(
   "/",
   auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
