@@ -188,6 +188,13 @@
   dependencies:
     undici-types "~6.19.8"
 
+"@types/nodemailer@^6.4.16":
+  version "6.4.16"
+  resolved "https://registry.npmjs.org/@types/nodemailer/-/nodemailer-6.4.16.tgz"
+  integrity sha512-uz6hN6Pp0upXMcilM61CoKyjT7sskBoOWpptkjjJp8jIMlTdc3xG01U7proKkXzruMS4hS0zqtHNkNPFB20rKQ==
+  dependencies:
+    "@types/node" "*"
+
 "@types/qs@*":
   version "6.9.17"
   resolved "https://registry.npmjs.org/@types/qs/-/qs-6.9.17.tgz"
@@ -1034,6 +1041,11 @@ node-fetch@^2.6.7:
   integrity sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==
   dependencies:
     whatwg-url "^5.0.0"
+
+nodemailer@^6.9.16:
+  version "6.9.16"
+  resolved "https://registry.npmjs.org/nodemailer/-/nodemailer-6.9.16.tgz"
+  integrity sha512-psAuZdTIRN08HKVd/E8ObdV6NO7NTBY3KsC30F7M4H1OnmLCUNaS56FpYxyb26zWLSyYF9Ozch9KYHhHegsiOQ==
 
 nopt@^5.0.0:
   version "5.0.0"

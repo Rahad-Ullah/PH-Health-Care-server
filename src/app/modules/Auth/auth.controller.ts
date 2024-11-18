@@ -1,6 +1,7 @@
 import catchAsync from "../../../shared/catchAsync";
 import { sendResponse } from "../../../utils/sendResponse";
 import { authServices } from "./auth.service";
+import { Request, Response } from "express";
 
 const loginUser = catchAsync(async (req, res) => {
   const result = await authServices.loginUserIntoDB(req.body);
@@ -35,19 +36,35 @@ const refreshToken = catchAsync(async (req, res) => {
   });
 });
 
-const changePassword = catchAsync(async (req, res) => {
-  const result = await authServices.changePassword(req.user, req.body);
+const changePassword = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const result = await authServices.changePassword(req.user, req.body);
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "Password changed successfully",
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Password changed successfully",
+      data: result,
+    });
+  }
+);
+
+const forgotPassword = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const result = await authServices.forgotPassword(req.body);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Password changed successfully",
+      data: result,
+    });
+  }
+);
 
 export const authControllers = {
   loginUser,
   refreshToken,
   changePassword,
+  forgotPassword,
 };
