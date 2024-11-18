@@ -140,7 +140,7 @@ const forgotPassword = async (payload: { email: string }) => {
     config.jwt.reset_pass_secret as string,
     config.jwt.reset_pass_expires_in as string
   );
-  const resetPassLink = `${config.reset_pass_link}?id=${userData.id}&token${resetPassToken}`;
+  const resetPassLink = `${config.reset_pass_link}?id=${userData.id}&token=${resetPassToken}`;
 
   await emailSender(
     userData.email,
@@ -155,8 +155,42 @@ const forgotPassword = async (payload: { email: string }) => {
     </div>
     `
   );
+};
 
-  console.log(resetPassLink);
+// reset password -------
+const resetPassword = async (
+  token: string,
+  payload: { id: string; password: string }
+) => {
+  // check if the user valid
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: payload.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  // validate token
+  const isValidToken = jwtHelpers.verifyToken(
+    token,
+    config.jwt.reset_pass_secret as Secret
+  );
+
+  if (!isValidToken) {
+    throw new ApiError(StatusCodes.FORBIDDEN, "Forbidden!");
+  }
+
+  // hash password
+  const hashedPassword = await bcrypt.hash(payload.password, 12);
+
+  // update password into DB
+  const result = await prisma.user.update({
+    where: {
+      id: payload.id,
+    },
+    data: { password: hashedPassword },
+  });
+  return result;
 };
 
 export const authServices = {
@@ -164,4 +198,5 @@ export const authServices = {
   refreshToken,
   changePassword,
   forgotPassword,
+  resetPassword,
 };

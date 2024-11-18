@@ -49,15 +49,32 @@ const changePassword = catchAsync(
   }
 );
 
+// forgot password
 const forgotPassword = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
-    const result = await authServices.forgotPassword(req.body);
+    await authServices.forgotPassword(req.body);
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Password changed successfully",
-      data: result,
+      message: "Checked your email successfully",
+      data: null,
+    });
+  }
+);
+
+// reset password
+const resetPassword = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const token = req.headers.authorization || ""
+    
+    await authServices.resetPassword(token, req.body);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Password reseted successfully",
+      data: null,
     });
   }
 );
@@ -67,4 +84,5 @@ export const authControllers = {
   refreshToken,
   changePassword,
   forgotPassword,
+  resetPassword,
 };
