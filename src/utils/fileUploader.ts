@@ -1,5 +1,6 @@
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 import { v2 as cloudinary } from "cloudinary";
 
 // Configuration
@@ -20,18 +21,20 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// Upload an image by cloudinary
 const uploadToCloudinary = async (file: any) => {
-  // Upload an image
-  await cloudinary.uploader
-    .upload(
-      `K:/Web Level - 2/Milestone - 08/PH-Health-Care-Server/uploads/my-post.png`,
-      {
-        public_id: "shoes",
-      }
-    )
-    .catch((error) => {
-      console.log(error);
+  try {
+    const res = await cloudinary.uploader.upload(file.path, {
+      public_id: file.originalname,
     });
+    // remove file from storage after upload success
+    fs.unlinkSync(file.path);
+    return res;
+  } catch (error) {
+    // remove file from storage if upload error
+    fs.unlinkSync(file.path);
+    console.log(error);
+  }
 };
 
 export const fileUploader = {
