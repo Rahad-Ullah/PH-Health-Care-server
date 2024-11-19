@@ -2,6 +2,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { v2 as cloudinary } from "cloudinary";
+import { IUploadedFile } from "../app/interfaces/file";
 
 // Configuration
 cloudinary.config({
@@ -22,7 +23,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Upload an image by cloudinary
-const uploadToCloudinary = async (file: any) => {
+const uploadToCloudinary = async (file: IUploadedFile) => {
   try {
     const res = await cloudinary.uploader.upload(file.path, {
       public_id: file.originalname,

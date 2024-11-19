@@ -11,7 +11,6 @@ const createAdminIntoDB = async (req: any) => {
   if (file) {
     const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
     req.body.admin.profilePhoto = uploadToCloudinary?.secure_url;
-    console.log(req.body);
   }
 
   // check if the user is already exist
