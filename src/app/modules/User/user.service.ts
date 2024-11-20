@@ -46,6 +46,50 @@ const createAdminIntoDB = async (req: any) => {
   return result;
 };
 
+
+// create doctor
+const createDoctorIntoDB = async (req: any) => {
+  const file = req.file;
+
+  if (file) {
+    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
+    req.body.doctor.profilePhoto = uploadToCloudinary?.secure_url;
+  }
+
+  // check if the user is already exist
+  const user = await prisma.user.findUnique({
+    where: {
+      email: req.body.doctor.email,
+    },
+  });
+  if (user) {
+    throw new ApiError(StatusCodes.CONFLICT, "Doctor already exists");
+  }
+
+  const hashedPassword: string = await bcrypt.hash(req.body.password, 12);
+
+  const userData = {
+    email: req.body.doctor.email,
+    password: hashedPassword,
+    role: UserRole.DOCTOR,
+  };
+
+  const result = await prisma.$transaction(async (transactionClient) => {
+    await transactionClient.user.create({
+      data: userData,
+    });
+
+    const createdDoctorData = await transactionClient.doctor.create({
+      data: req.body.doctor,
+    });
+
+    return createdDoctorData;
+  });
+
+  return result;
+};
+
 export const userService = {
   createAdminIntoDB,
+  createDoctorIntoDB
 };
