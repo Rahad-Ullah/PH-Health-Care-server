@@ -1,14 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 
 const globalErrorHandler = (
-  err: Error,
+  err: Error & { statusCode?: number },
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  // const statusCode = err.statusCode
-  // console.log(statusCode);
-  res.status(500).json({
+  const statusCode = err?.statusCode || 500;
+  res.status(statusCode).json({
     success: false,
     message: err.message || "Something went wrong",
     error: err,

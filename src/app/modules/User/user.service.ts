@@ -1,4 +1,11 @@
-import { Admin, Doctor, Patient, Prisma, UserRole } from "@prisma/client";
+import {
+  Admin,
+  Doctor,
+  Patient,
+  Prisma,
+  UserRole,
+  UserStatus,
+} from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import prisma from "../../../shared/prisma";
 import ApiError from "../../errors/ApiError";
@@ -206,9 +213,36 @@ const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
   };
 };
 
+// change user status
+const changeUserStatusIntoDB = async (
+  id: string,
+  payload: { status: UserStatus }
+) => {
+  // check if user is exist
+  const userData = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+  });
+  if (!userData) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User not exist");
+  }
+
+  // update user status
+  const updateUserStatus = await prisma.user.update({
+    where: {
+      id,
+    },
+    data: payload,
+  });
+
+  return updateUserStatus;
+};
+
 export const userService = {
   createAdminIntoDB,
   createDoctorIntoDB,
   createPatientIntoDB,
   getAllUsersFromDB,
+  changeUserStatusIntoDB,
 };
