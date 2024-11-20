@@ -5,6 +5,7 @@ import ApiError from "../../errors/ApiError";
 import { StatusCodes } from "http-status-codes";
 import { fileUploader } from "../../../utils/fileUploader";
 
+// create admin
 const createAdminIntoDB = async (req: any) => {
   const file = req.file;
 
@@ -89,7 +90,50 @@ const createDoctorIntoDB = async (req: any) => {
   return result;
 };
 
+// create patient
+const createPatientIntoDB = async (req: any) => {
+  const file = req.file;
+
+  if (file) {
+    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
+    req.body.patient.profilePhoto = uploadToCloudinary?.secure_url;
+  }
+
+  // check if the user is already exist
+  const user = await prisma.user.findUnique({
+    where: {
+      email: req.body.patient.email,
+    },
+  });
+  if (user) {
+    throw new ApiError(StatusCodes.CONFLICT, "Patient already exists");
+  }
+
+  const hashedPassword: string = await bcrypt.hash(req.body.password, 12);
+
+  const userData = {
+    email: req.body.patient.email,
+    password: hashedPassword,
+    role: UserRole.PATIENT,
+  };
+
+  const result = await prisma.$transaction(async (transactionClient) => {
+    await transactionClient.user.create({
+      data: userData,
+    });
+
+    const createdPatientData = await transactionClient.patient.create({
+      data: req.body.patient,
+    });
+
+    return createdPatientData;
+  });
+
+  return result;
+};
+
 export const userService = {
   createAdminIntoDB,
-  createDoctorIntoDB
+  createDoctorIntoDB,
+  createPatientIntoDB
 };
