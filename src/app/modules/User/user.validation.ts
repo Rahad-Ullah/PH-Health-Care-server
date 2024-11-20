@@ -1,4 +1,4 @@
-import { Gender } from "@prisma/client";
+import { Gender, UserStatus } from "@prisma/client";
 import { z } from "zod";
 
 // validation schema for create admin
@@ -46,12 +46,19 @@ const createPatientValidationSchema = z.object({
       .string({ required_error: "Email is required" })
       .email({ message: "Invalid email address" }),
     contactNumber: z.string({ required_error: "Contact Number is required" }),
-    address: z.string().optional()
+    address: z.string().optional(),
+  }),
+});
+
+const updateUserStatus = z.object({
+  body: z.object({
+    status: z.enum([UserStatus.ACTIVE, UserStatus.BLOCKED, UserStatus.DELETED]),
   }),
 });
 
 export const userValidation = {
   createAdminValidationSchema,
   createDoctorValidationSchema,
-  createPatientValidationSchema
+  createPatientValidationSchema,
+  updateUserStatus,
 };
