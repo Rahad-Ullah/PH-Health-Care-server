@@ -4,6 +4,7 @@ import { sendResponse } from "../../../utils/sendResponse";
 import catchAsync from "../../../shared/catchAsync";
 import pick from "../../../shared/pick";
 import { userFilterableFields } from "./user.constant";
+import { JwtPayload } from "jsonwebtoken";
 
 const createAdmin = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.createAdminIntoDB(req);
@@ -62,10 +63,24 @@ const changeProfileStatus = catchAsync(async (req, res) => {
   });
 });
 
+const getMyProfile = catchAsync(
+  async (req: Request & { user?: JwtPayload }, res) => {
+    const result = await userService.getMyProfileFromDB(req.user);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "User profile retrieved successfully",
+      data: result,
+    });
+  }
+);
+
 export const userController = {
   createAdmin,
   createDoctor,
   createPatient,
   getAllUsers,
   changeProfileStatus,
+  getMyProfile,
 };
