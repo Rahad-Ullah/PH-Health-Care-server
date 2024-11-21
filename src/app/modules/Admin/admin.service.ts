@@ -9,21 +9,24 @@ const getAllAdminsFromDB = async (
   params: IAdminFilterRequest,
   options: IPaginationOptions
 ) => {
+  // format params and options information
   const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
   const { searchTerm, ...filterData } = params;
+
   const conditions: Prisma.AdminWhereInput[] = [];
 
-  if (params.searchTerm) {
+  // filter if search term specified
+  if (searchTerm) {
     conditions.push({
       OR: adminSearchableFields.map((value) => ({
         [value]: {
-          contains: params.searchTerm,
+          contains: searchTerm,
           mode: "insensitive",
         },
       })),
     });
   }
-
+  // filter if filter data specified
   if (Object.keys(filterData).length > 0) {
     conditions.push({
       AND: Object.keys(filterData).map((key) => ({
@@ -33,15 +36,14 @@ const getAllAdminsFromDB = async (
       })),
     });
   }
-
+  // filter non deleted items
   conditions.push({
     isDeleted: false,
   });
 
-  const whereConditions: Prisma.AdminWhereInput = { AND: conditions };
-
+  // execute query
   const result = await prisma.admin.findMany({
-    where: whereConditions,
+    where: { AND: conditions } as Prisma.AdminWhereInput,
     skip,
     take: limit,
     orderBy: {
@@ -49,9 +51,11 @@ const getAllAdminsFromDB = async (
     },
   });
 
+  // count total
   const total = await prisma.admin.count({
-    where: whereConditions,
+    where: { AND: conditions } as Prisma.AdminWhereInput,
   });
+
   return {
     meta: {
       page,
