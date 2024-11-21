@@ -16,6 +16,7 @@ import { IUploadedFile } from "../../interfaces/file";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { calculatePagination } from "../../../utils/pagination";
 import { userSearchableFields } from "./user.constant";
+import { TAuthUser } from "../../interfaces/common";
 
 // create admin
 const createAdminIntoDB = async (req: Request): Promise<Admin> => {
@@ -239,10 +240,10 @@ const changeUserStatusIntoDB = async (
   return updateUserStatus;
 };
 
-const getMyProfileFromDB = async (user: any) => {
+const getMyProfileFromDB = async (user: TAuthUser) => {
   const userInfo = await prisma.user.findUniqueOrThrow({
     where: {
-      email: user.email,
+      email: user?.email,
       status: UserStatus.ACTIVE,
     },
     select: {
@@ -273,11 +274,11 @@ const getMyProfileFromDB = async (user: any) => {
   return { ...userInfo, ...profileInfo };
 };
 
-const updateMyProfile = async (user: any, req: Request) => {
+const updateMyProfile = async (user: TAuthUser, req: Request) => {
   // check if the user exists
   const userInfo = await prisma.user.findUnique({
     where: {
-      email: user.email,
+      email: user?.email,
       status: UserStatus.ACTIVE,
     },
   });
@@ -296,17 +297,17 @@ const updateMyProfile = async (user: any, req: Request) => {
   let updatedData;
   if (userInfo.role === "SUPER_ADMIN" || "ADMIN") {
     updatedData = await prisma.admin.update({
-      where: { email: user.email },
+      where: { email: userInfo.email },
       data: req.body,
     });
   } else if (userInfo.role === "DOCTOR") {
     updatedData = await prisma.doctor.update({
-      where: { email: user.email },
+      where: { email: userInfo.email },
       data: req.body,
     });
   } else if (userInfo.role === "PATIENT") {
     updatedData = await prisma.doctor.update({
-      where: { email: user.email },
+      where: { email: userInfo.email },
       data: req.body,
     });
   }

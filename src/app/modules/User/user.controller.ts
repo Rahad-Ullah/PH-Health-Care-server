@@ -5,6 +5,7 @@ import catchAsync from "../../../shared/catchAsync";
 import pick from "../../../shared/pick";
 import { userFilterableFields } from "./user.constant";
 import { JwtPayload } from "jsonwebtoken";
+import { TAuthUser } from "../../interfaces/common";
 
 const createAdmin = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.createAdminIntoDB(req);
@@ -36,6 +37,7 @@ const createPatient = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// get all users
 const getAllUsers = catchAsync(async (req, res) => {
   const filters = pick(req.query, userFilterableFields);
   const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
@@ -50,6 +52,7 @@ const getAllUsers = catchAsync(async (req, res) => {
   });
 });
 
+// change profile status
 const changeProfileStatus = catchAsync(async (req, res) => {
   const { id } = req.params;
 
@@ -63,9 +66,10 @@ const changeProfileStatus = catchAsync(async (req, res) => {
   });
 });
 
+// get profile info
 const getMyProfile = catchAsync(
-  async (req: Request & { user?: JwtPayload }, res) => {
-    const result = await userService.getMyProfileFromDB(req.user);
+  async (req: Request & { user?: TAuthUser }, res) => {
+    const result = await userService.getMyProfileFromDB(req.user as TAuthUser);
 
     sendResponse(res, {
       statusCode: 200,
@@ -76,10 +80,13 @@ const getMyProfile = catchAsync(
   }
 );
 
-
+// update profile
 const updateMyProfile = catchAsync(
-  async (req: Request & { user?: JwtPayload }, res) => {
-    const result = await userService.updateMyProfile(req.user, req);
+  async (req: Request & { user?: TAuthUser }, res) => {
+    const result = await userService.updateMyProfile(
+      req.user as TAuthUser,
+      req
+    );
 
     sendResponse(res, {
       statusCode: 200,
