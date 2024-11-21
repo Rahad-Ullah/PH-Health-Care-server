@@ -42,7 +42,28 @@ const getAllSpecialitiesFromDB = async () => {
 };
 
 
+const deleteSpecialityFromDB = async (id: string) => {
+  // check if the speciality exists
+  const speciality = await prisma.specialities.findUnique({
+    where: {
+      id,
+    },
+  });
+  if (!speciality) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Speciality does not exists!");
+  }
+
+  const result = await prisma.specialities.delete({
+    where: {
+      id,
+    },
+  });
+
+  return result;
+};
+
 export const SpecialitiesServices = {
   createSpecialityIntoDB,
   getAllSpecialitiesFromDB,
+  deleteSpecialityFromDB,
 };

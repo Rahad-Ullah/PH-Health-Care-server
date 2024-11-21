@@ -18,4 +18,6 @@ router.post(
   }
 );
 
+router.delete("/:id", SpecialitiesControllers.deleteSpeciality);
+
 export const SpecialitiesRoutes = router;
