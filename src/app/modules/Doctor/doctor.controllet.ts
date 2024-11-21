@@ -42,8 +42,32 @@ const updateDoctor = catchAsync(async (req, res) => {
   });
 });
 
+const softDeleteDoctor = catchAsync(async (req, res) => {
+  const result = await doctorServices.softDeleteDoctorFromDB(req.params.id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Doctor deleted successfully",
+    data: result,
+  });
+});
+
+const deleteDoctor = catchAsync(async (req, res) => {
+  const result = await doctorServices.deleteDoctorFromDB(req.params.id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Doctor deleted successfully",
+    data: result,
+  });
+});
+
 export const doctorControllers = {
   getAllDoctors,
   getDoctorById,
   updateDoctor,
+  softDeleteDoctor,
+  deleteDoctor,
 };

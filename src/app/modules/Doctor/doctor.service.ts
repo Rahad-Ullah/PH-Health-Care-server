@@ -163,8 +163,72 @@ const updateDoctorIntoDB = async (id: string, payload: any) => {
   return result;
 };
 
+const softDeleteDoctorFromDB = async (id: string) => {
+  const doctor = await prisma.doctor.findUnique({
+    where: {
+      id,
+      isDeleted: false,
+    },
+  });
+  if (!doctor) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Doctor does not exists");
+  }
+
+  const result = await prisma.doctor.update({
+    where: {
+      id,
+    },
+    data: {
+      isDeleted: true,
+    },
+  });
+
+  return result;
+};
+
+const deleteDoctorFromDB = async (id: string) => {
+  // check if the doctor exists
+  const doctorData = await prisma.doctor.findUnique({
+    where: {
+      id,
+    },
+  });
+  if (!doctorData) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Doctor does not exists");
+  }
+
+  const result = await prisma.$transaction(async (txClient) => {
+    // delete from doctor specialities table
+    await txClient.doctorSpecialities.deleteMany({
+      where: {
+        doctorId: id,
+      },
+    });
+
+    // delete from doctor table
+    const deletedDoctor = await txClient.doctor.delete({
+      where: {
+        id,
+      },
+    });
+
+    // delete from user table
+    await txClient.user.delete({
+      where: {
+        email: doctorData.email,
+      },
+    });
+
+    return deletedDoctor;
+  });
+
+  return result;
+};
+
 export const doctorServices = {
   getAllDoctorsFromDB,
   getDoctorByIdFromDB,
   updateDoctorIntoDB,
+  softDeleteDoctorFromDB,
+  deleteDoctorFromDB,
 };
