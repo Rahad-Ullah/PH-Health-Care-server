@@ -273,7 +273,7 @@ const getMyProfileFromDB = async (user: any) => {
   return { ...userInfo, ...profileInfo };
 };
 
-const updateMyProfile = async (user, payload) => {
+const updateMyProfile = async (user: any, req: Request) => {
   // check if the user exists
   const userInfo = await prisma.user.findUnique({
     where: {
@@ -285,22 +285,29 @@ const updateMyProfile = async (user, payload) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User does not exists");
   }
 
+  // upload profile photo to cloudinary
+  const file = req.file as IUploadedFile;
+  if (file) {
+    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
+    req.body.profilePhoto = uploadToCloudinary?.secure_url;
+  }
+
   // update user profile based on their role
   let updatedData;
   if (userInfo.role === "SUPER_ADMIN" || "ADMIN") {
     updatedData = await prisma.admin.update({
       where: { email: user.email },
-      data: payload,
+      data: req.body,
     });
   } else if (userInfo.role === "DOCTOR") {
     updatedData = await prisma.doctor.update({
       where: { email: user.email },
-      data: payload,
+      data: req.body,
     });
   } else if (userInfo.role === "PATIENT") {
     updatedData = await prisma.doctor.update({
       where: { email: user.email },
-      data: payload,
+      data: req.body,
     });
   }
 
