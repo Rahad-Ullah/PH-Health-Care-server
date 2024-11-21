@@ -81,7 +81,7 @@ const getDoctorByIdFromDB = async (id: string) => {
 };
 
 const updateDoctorIntoDB = async (id: string, payload: any) => {
-  const { specialties, ...doctorData } = payload;
+  const { specialities, ...doctorData } = payload;
 
   // check if doctor is exists
   const doctor = await prisma.doctor.findUnique({
@@ -93,39 +93,71 @@ const updateDoctorIntoDB = async (id: string, payload: any) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Doctor does not exist");
   }
 
-  // update the doctor and create his specialties by transaction
-  const result = await prisma.$transaction(async (txClient) => {
-    const updatedDoctorData = await txClient.doctor.update({
+  await prisma.$transaction(async (txClient) => {
+    // update doctor data
+    await txClient.doctor.update({
       where: {
         id,
       },
       data: doctorData,
-      include: {
-        doctorSpecialities: true,
-      },
     });
 
-    for (const specialitiesId of specialties) {
-      // check if the specialty is exist
-      const isSpecialityExist = await txClient.specialities.findUnique({
-        where: {
-          id: specialitiesId,
-        },
-      });
-      if (!isSpecialityExist) {
-        throw new ApiError(StatusCodes.NOT_FOUND, "Invalid specialty ID");
+    if (specialities && specialities.length > 0) {
+      // delete specialities
+      const deletedSpecialities = specialities.filter(
+        (speciality: any) => speciality.isDeleted
+      );
+
+      for (const speciality of deletedSpecialities) {
+        // check if the specialty is exist
+        await txClient.specialities.findUniqueOrThrow({
+          where: {
+            id: speciality.specialityId,
+          },
+        });
+        // delete specialities
+        await txClient.doctorSpecialities.deleteMany({
+          where: {
+            doctorId: doctor.id,
+            specialitiesId: speciality.specialityId,
+          },
+        });
       }
 
-      // create a new speciality
-      await txClient.doctorSpecialities.create({
-        data: {
-          doctorId: doctor.id,
-          specialitiesId: specialitiesId,
-        },
-      });
-    }
+      // create specialities
+      const createdSpecialities = specialities.filter(
+        (speciality: any) => !speciality.isDeleted
+      );
 
-    return updatedDoctorData;
+      for (const speciality of createdSpecialities) {
+        // check if the specialty is exist
+        await txClient.specialities.findUniqueOrThrow({
+          where: {
+            id: speciality.specialityId,
+          },
+        });
+        // delete specialities
+        await txClient.doctorSpecialities.create({
+          data: {
+            doctorId: doctor.id,
+            specialitiesId: speciality.specialityId,
+          },
+        });
+      }
+    }
+  });
+
+  const result = await prisma.doctor.findUnique({
+    where: {
+      id: doctor.id,
+    },
+    include: {
+      doctorSpecialities: {
+        include: {
+          specialities: true,
+        },
+      },
+    },
   });
 
   return result;
