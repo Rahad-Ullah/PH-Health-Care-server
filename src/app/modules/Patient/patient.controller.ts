@@ -26,7 +26,21 @@ const getSinglePatient = catchAsync(async (req, res) => {
   });
 });
 
+const updatePatient = catchAsync(async (req, res) => {
+  const result = await patientServices.updatePatientIntoDB(
+    req.params.id,
+    req.body
+  );
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Patient updated successfully",
+    data: result,
+  });
+});
+
 export const patientControllers = {
   getAllPatients,
   getSinglePatient,
+  updatePatient,
 };

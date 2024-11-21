@@ -86,7 +86,58 @@ const getSinglePatientFromDB = async (id: string) => {
   return result;
 };
 
+const updatePatientIntoDB = async (id: string, payload: any) => {
+  const { patientHealthData, medicalReport, ...patientData } = payload;
+
+  // check if the patient is exists
+  const patient = await prisma.patient.findUniqueOrThrow({
+    where: {
+      id,
+    },
+  });
+
+  await prisma.$transaction(async (txClient) => {
+    // update the patient data
+    await txClient.patient.update({
+      where: {
+        id,
+      },
+      data: patientData,
+    });
+
+    // create or update health data
+    if (patientHealthData) {
+      await txClient.patientHealthData.upsert({
+        where: {
+          patientId: patient.id,
+        },
+        update: patientHealthData,
+        create: { ...patientHealthData, patientId: patient.id },
+      });
+    }
+
+    // create medical report data
+    if (medicalReport) {
+      await txClient.medicalReport.create({
+        data: { ...medicalReport, patientId: patient.id },
+      });
+    }
+  });
+
+  // updated patient data with health data and medical report
+  const responseData = await prisma.patient.findUnique({
+    where: { id },
+    include: {
+      patientHealthData: true,
+      medicalReport: true,
+    },
+  });
+
+  return responseData;
+};
+
 export const patientServices = {
   getAllPatientsFromDB,
   getSinglePatientFromDB,
+  updatePatientIntoDB,
 };

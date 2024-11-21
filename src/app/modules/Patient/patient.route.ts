@@ -7,4 +7,6 @@ router.get("/", patientControllers.getAllPatients);
 
 router.get("/:id", patientControllers.getSinglePatient);
 
+router.patch("/:id", patientControllers.updatePatient);
+
 export const PatientRoutes = router;
