@@ -243,6 +243,7 @@ const getMyProfileFromDB = async (user: any) => {
   const userInfo = await prisma.user.findUniqueOrThrow({
     where: {
       email: user.email,
+      status: UserStatus.ACTIVE,
     },
     select: {
       id: true,
@@ -272,6 +273,40 @@ const getMyProfileFromDB = async (user: any) => {
   return { ...userInfo, ...profileInfo };
 };
 
+const updateMyProfile = async (user, payload) => {
+  // check if the user exists
+  const userInfo = await prisma.user.findUnique({
+    where: {
+      email: user.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  if (!userInfo) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User does not exists");
+  }
+
+  // update user profile based on their role
+  let updatedData;
+  if (userInfo.role === "SUPER_ADMIN" || "ADMIN") {
+    updatedData = await prisma.admin.update({
+      where: { email: user.email },
+      data: payload,
+    });
+  } else if (userInfo.role === "DOCTOR") {
+    updatedData = await prisma.doctor.update({
+      where: { email: user.email },
+      data: payload,
+    });
+  } else if (userInfo.role === "PATIENT") {
+    updatedData = await prisma.doctor.update({
+      where: { email: user.email },
+      data: payload,
+    });
+  }
+
+  return updatedData;
+};
+
 export const userService = {
   createAdminIntoDB,
   createDoctorIntoDB,
@@ -279,4 +314,5 @@ export const userService = {
   getAllUsersFromDB,
   changeUserStatusIntoDB,
   getMyProfileFromDB,
+  updateMyProfile,
 };

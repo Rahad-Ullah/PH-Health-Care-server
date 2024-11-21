@@ -76,6 +76,20 @@ const getMyProfile = catchAsync(
   }
 );
 
+
+const updateMyProfile = catchAsync(
+  async (req: Request & { user?: JwtPayload }, res) => {
+    const result = await userService.updateMyProfile(req.user, req.body);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "User profile updated successfully",
+      data: result,
+    });
+  }
+);
+
 export const userController = {
   createAdmin,
   createDoctor,
@@ -83,4 +97,5 @@ export const userController = {
   getAllUsers,
   changeProfileStatus,
   getMyProfile,
+  updateMyProfile,
 };
