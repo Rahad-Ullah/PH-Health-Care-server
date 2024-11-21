@@ -81,24 +81,51 @@ const getDoctorByIdFromDB = async (id: string) => {
 };
 
 const updateDoctorIntoDB = async (id: string, payload: any) => {
+  const { specialties, ...doctorData } = payload;
+
   // check if doctor is exists
-  const doctorData = await prisma.doctor.findUnique({
+  const doctor = await prisma.doctor.findUnique({
     where: {
       id,
     },
   });
-  if (!doctorData) {
+  if (!doctor) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Doctor does not exist");
   }
 
-  const result = await prisma.doctor.update({
-    where: {
-      id,
-    },
-    data: payload,
-    include: {
-      doctorSpecialities: true,
-    },
+  // update the doctor and create his specialties by transaction
+  const result = await prisma.$transaction(async (txClient) => {
+    const updatedDoctorData = await txClient.doctor.update({
+      where: {
+        id,
+      },
+      data: doctorData,
+      include: {
+        doctorSpecialities: true,
+      },
+    });
+
+    for (const specialitiesId of specialties) {
+      // check if the specialty is exist
+      const isSpecialityExist = await txClient.specialities.findUnique({
+        where: {
+          id: specialitiesId,
+        },
+      });
+      if (!isSpecialityExist) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "Invalid specialty ID");
+      }
+
+      // create a new speciality
+      await txClient.doctorSpecialities.create({
+        data: {
+          doctorId: doctor.id,
+          specialitiesId: specialitiesId,
+        },
+      });
+    }
+
+    return updatedDoctorData;
   });
 
   return result;
