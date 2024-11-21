@@ -13,7 +13,7 @@ const getAllDoctorsFromDB = async (
 ) => {
   // format params and options information
   const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
-  const { searchTerm, ...filterData } = params;
+  const { searchTerm, specialities, ...filterData } = params;
 
   const whereConditions: Prisma.DoctorWhereInput[] = [];
 
@@ -37,6 +37,22 @@ const getAllDoctorsFromDB = async (
           equals: (filterData as any)[field],
         },
       })),
+    });
+  }
+
+  // filter if specialities specified
+  if (specialities && specialities.length > 0) {
+    whereConditions.push({
+      doctorSpecialities: {
+        some: {
+          specialities: {
+            title: {
+              contains: specialities,
+              mode: "insensitive",
+            },
+          },
+        },
+      },
     });
   }
 
@@ -136,7 +152,23 @@ const updateDoctorIntoDB = async (id: string, payload: any) => {
             id: speciality.specialityId,
           },
         });
-        // delete specialities
+
+        // check if the Specialities already exist
+        const isDoctorSpecialityExist =
+          await txClient.doctorSpecialities.findFirst({
+            where: {
+              doctorId: doctor.id,
+              specialitiesId: speciality.specialityId,
+            },
+          });
+        if (isDoctorSpecialityExist) {
+          throw new ApiError(
+            StatusCodes.CONFLICT,
+            "The speciality is already exists"
+          );
+        }
+
+        // create specialities
         await txClient.doctorSpecialities.create({
           data: {
             doctorId: doctor.id,

@@ -4,6 +4,7 @@ export const doctorFilterableFields = [
   "gender",
   "currentWorkingPlace",
   "searchTerm",
+  "specialities",
 ];
 
 export const doctorSearchableFields = [

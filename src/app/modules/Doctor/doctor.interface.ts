@@ -6,4 +6,5 @@ export interface IDoctorFilterRequest {
   gender?: string | undefined;
   currentWorkingPlace?: string | undefined;
   searchTerm?: string | undefined;
+  specialities?: string | undefined;
 }
