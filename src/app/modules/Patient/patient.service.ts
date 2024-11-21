@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
+import { Patient, Prisma } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import { calculatePagination } from "../../../utils/pagination";
 import { patientSearchableFields } from "./patient.constant";
-import { IPatientFilterRequest } from "./patient.interface";
+import { IPatientFilterRequest, IPatientUpdate } from "./patient.interface";
 import { IPaginationOptions } from "../../interfaces/pagination";
 
 const getAllPatientsFromDB = async (
@@ -86,7 +86,10 @@ const getSinglePatientFromDB = async (id: string) => {
   return result;
 };
 
-const updatePatientIntoDB = async (id: string, payload: any) => {
+const updatePatientIntoDB = async (
+  id: string,
+  payload: Partial<IPatientUpdate>
+): Promise<Patient | null> => {
   const { patientHealthData, medicalReport, ...patientData } = payload;
 
   // check if the patient is exists
