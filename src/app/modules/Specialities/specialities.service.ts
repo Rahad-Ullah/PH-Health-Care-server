@@ -31,7 +31,18 @@ const createSpecialityIntoDB = async (req: Request) => {
 };
 
 
+const getAllSpecialitiesFromDB = async () => {
+  const result = await prisma.specialities.findMany({
+    orderBy: {
+      title: "asc",
+    },
+  });
+
+  return result;
+};
+
 
 export const SpecialitiesServices = {
   createSpecialityIntoDB,
+  getAllSpecialitiesFromDB,
 };

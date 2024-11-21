@@ -13,6 +13,18 @@ const createSpeciality = catchAsync(async (req, res) => {
   });
 });
 
+const getAllSpecialities = catchAsync(async (req, res) => {
+  const result = await SpecialitiesServices.getAllSpecialitiesFromDB();
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Specialities retrieved successfully",
+    data: result,
+  });
+});
+
 export const SpecialitiesControllers = {
   createSpeciality,
+  getAllSpecialities,
 };
