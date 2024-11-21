@@ -4,6 +4,8 @@ import { calculatePagination } from "../../../utils/pagination";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { IDoctorFilterRequest } from "./doctor.interface";
 import { doctorSearchableFields } from "./doctor.constant";
+import ApiError from "../../errors/ApiError";
+import { StatusCodes } from "http-status-codes";
 
 const getAllDoctorsFromDB = async (
   params: IDoctorFilterRequest,
@@ -78,7 +80,32 @@ const getDoctorByIdFromDB = async (id: string) => {
   return result;
 };
 
+const updateDoctorIntoDB = async (id: string, payload: any) => {
+  // check if doctor is exists
+  const doctorData = await prisma.doctor.findUnique({
+    where: {
+      id,
+    },
+  });
+  if (!doctorData) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Doctor does not exist");
+  }
+
+  const result = await prisma.doctor.update({
+    where: {
+      id,
+    },
+    data: payload,
+    include: {
+      doctorSpecialities: true,
+    },
+  });
+
+  return result;
+};
+
 export const doctorServices = {
   getAllDoctorsFromDB,
   getDoctorByIdFromDB,
+  updateDoctorIntoDB,
 };
