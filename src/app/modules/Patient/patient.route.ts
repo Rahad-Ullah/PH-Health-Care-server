@@ -11,4 +11,6 @@ router.patch("/:id", patientControllers.updatePatient);
 
 router.delete("/:id", patientControllers.deletePatient);
 
+router.delete("/soft/:id", patientControllers.softDeletePatient);
+
 export const PatientRoutes = router;

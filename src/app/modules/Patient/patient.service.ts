@@ -182,9 +182,31 @@ const deletePatientFromBD = async (id: string) => {
   return result;
 };
 
+const softDeletePatientFromDB = async (id: string) => {
+  // check if patient is exists
+  await prisma.patient.findUniqueOrThrow({
+    where: {
+      id,
+    },
+  });
+
+  // update isDeleted field
+  const result = await prisma.patient.update({
+    where: {
+      id,
+    },
+    data: {
+      isDeleted: true,
+    },
+  });
+
+  return result;
+};
+
 export const patientServices = {
   getAllPatientsFromDB,
   getSinglePatientFromDB,
   updatePatientIntoDB,
   deletePatientFromBD,
+  softDeletePatientFromDB,
 };
