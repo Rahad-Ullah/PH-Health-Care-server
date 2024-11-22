@@ -1,4 +1,4 @@
-import { Patient, Prisma } from "@prisma/client";
+import { Patient, Prisma, UserStatus } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import { calculatePagination } from "../../../utils/pagination";
 import { patientSearchableFields } from "./patient.constant";
@@ -96,6 +96,7 @@ const updatePatientIntoDB = async (
   const patient = await prisma.patient.findUniqueOrThrow({
     where: {
       id,
+      isDeleted: false,
     },
   });
 
@@ -139,7 +140,7 @@ const updatePatientIntoDB = async (
   return responseData;
 };
 
-const deletePatientFromBD = async (id: string) => {
+const deletePatientFromBD = async (id: string): Promise<Patient | null> => {
   // check if patient is exist
   const patient = await prisma.patient.findUniqueOrThrow({
     where: {
@@ -182,7 +183,7 @@ const deletePatientFromBD = async (id: string) => {
   return result;
 };
 
-const softDeletePatientFromDB = async (id: string) => {
+const softDeletePatientFromDB = async (id: string): Promise<Patient | null> => {
   // check if patient is exists
   await prisma.patient.findUniqueOrThrow({
     where: {
@@ -190,14 +191,28 @@ const softDeletePatientFromDB = async (id: string) => {
     },
   });
 
-  // update isDeleted field
-  const result = await prisma.patient.update({
-    where: {
-      id,
-    },
-    data: {
-      isDeleted: true,
-    },
+  const result = await prisma.$transaction(async (tx) => {
+    // update patient
+    const deletedPatient = await tx.patient.update({
+      where: {
+        id,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    // update status of user model
+    await tx.user.update({
+      where: {
+        email: deletedPatient.email,
+      },
+      data: {
+        status: UserStatus.DELETED,
+      },
+    });
+
+    return deletedPatient;
   });
 
   return result;
