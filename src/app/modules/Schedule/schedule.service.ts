@@ -1,7 +1,9 @@
 import { addHours, addMinutes, format } from "date-fns";
 import prisma from "../../../shared/prisma";
-import { Schedule } from "@prisma/client";
+import { Prisma, Schedule } from "@prisma/client";
 import { ISchedule } from "./schedule.interface";
+import { IPaginationOptions } from "../../interfaces/pagination";
+import { calculatePagination } from "../../../utils/pagination";
 
 const createScheduleIntoDB = async (
   payload: ISchedule
@@ -75,6 +77,53 @@ const createScheduleIntoDB = async (
   return schedules;
 };
 
+const getAllSchedulesFromDB = async (
+  params: any,
+  options: IPaginationOptions
+) => {
+  // format params and options information
+  const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+  const { searchTerm, ...filterData } = params;
+
+  const whereConditions = [];
+
+  // filter if filter data specified
+  if (Object.keys(filterData).length > 0) {
+    whereConditions.push({
+      AND: Object.keys(filterData).map((field) => ({
+        [field]: {
+          equals: (filterData as any)[field],
+        },
+      })),
+    });
+  }
+
+  // execute query
+  const result = await prisma.schedule.findMany({
+    where: { AND: whereConditions } as Prisma.ScheduleWhereInput,
+    skip,
+    take: limit,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+  });
+
+  // count total
+  const total = await prisma.schedule.count({
+    where: { AND: whereConditions } as Prisma.ScheduleWhereInput,
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: result,
+  };
+};
+
 export const scheduleServices = {
   createScheduleIntoDB,
+  getAllSchedulesFromDB,
 };
