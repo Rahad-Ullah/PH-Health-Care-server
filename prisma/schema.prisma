@@ -146,8 +146,8 @@ model MedicalReport {
 
 model Schedule {
   id              String            @id @default(uuid())
-  startDate       DateTime
-  endDate         DateTime
+  startDateTime   DateTime
+  endDateTime     DateTime
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   doctorSchedules DoctorSchedules[]
@@ -156,12 +156,12 @@ model Schedule {
 }
 
 model DoctorSchedules {
-  doctorId      String
-  doctor        Doctor   @relation(fields: [doctorId], references: [id])
+  doctorId String
+  doctor   Doctor @relation(fields: [doctorId], references: [id])
 
-  scheduleId    String
-  schedule      Schedule @relation(fields: [scheduleId], references: [id])
-  
+  scheduleId String
+  schedule   Schedule @relation(fields: [scheduleId], references: [id])
+
   isBooked      Boolean
   appointmentId String?
 
