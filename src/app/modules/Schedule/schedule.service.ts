@@ -4,6 +4,7 @@ import { Prisma, Schedule } from "@prisma/client";
 import { ISchedule } from "./schedule.interface";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { calculatePagination } from "../../../utils/pagination";
+import { TAuthUser } from "../../interfaces/common";
 
 const createScheduleIntoDB = async (
   payload: ISchedule
@@ -79,17 +80,37 @@ const createScheduleIntoDB = async (
 
 const getAllSchedulesFromDB = async (
   params: any,
-  options: IPaginationOptions
+  options: IPaginationOptions,
+  user: TAuthUser
 ) => {
   // format params and options information
   const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
-  const { searchTerm, ...filterData } = params;
+  const { startDateTime, endDateTime, ...filterData } = params;
+  console.log(startDateTime, endDateTime);
+  console.log(startDateTime, endDateTime);
 
-  const whereConditions = [];
+  const andConditions = [];
+
+  if (startDateTime && endDateTime) {
+    andConditions.push({
+      AND: [
+        {
+          startDateTime: {
+            gte: startDateTime,
+          },
+        },
+        {
+          endDateTime: {
+            lte: endDateTime,
+          },
+        },
+      ],
+    });
+  }
 
   // filter if filter data specified
   if (Object.keys(filterData).length > 0) {
-    whereConditions.push({
+    andConditions.push({
       AND: Object.keys(filterData).map((field) => ({
         [field]: {
           equals: (filterData as any)[field],
@@ -98,9 +119,22 @@ const getAllSchedulesFromDB = async (
     });
   }
 
+  const whereConditions: Prisma.ScheduleWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const doctorSchedules = await prisma.doctorSchedules.findMany({
+    where: {
+      doctor: {
+        email: user?.email,
+      },
+    },
+  });
+
+  console.log(doctorSchedules);
+
   // execute query
   const result = await prisma.schedule.findMany({
-    where: { AND: whereConditions } as Prisma.ScheduleWhereInput,
+    where: whereConditions,
     skip,
     take: limit,
     orderBy: {
@@ -110,7 +144,7 @@ const getAllSchedulesFromDB = async (
 
   // count total
   const total = await prisma.schedule.count({
-    where: { AND: whereConditions } as Prisma.ScheduleWhereInput,
+    where: whereConditions,
   });
 
   return {
