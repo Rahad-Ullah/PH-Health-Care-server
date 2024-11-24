@@ -1,7 +1,7 @@
 import { addHours, addMinutes, format } from "date-fns";
 import prisma from "../../../shared/prisma";
 import { Prisma, Schedule } from "@prisma/client";
-import { ISchedule } from "./schedule.interface";
+import { IDoctorScheduleFilterRequest, ISchedule } from "./schedule.interface";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { calculatePagination } from "../../../utils/pagination";
 import { TAuthUser } from "../../interfaces/common";
@@ -79,15 +79,13 @@ const createScheduleIntoDB = async (
 };
 
 const getAllSchedulesFromDB = async (
-  params: any,
+  params: IDoctorScheduleFilterRequest,
   options: IPaginationOptions,
   user: TAuthUser
 ) => {
   // format params and options information
   const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
   const { startDateTime, endDateTime, ...filterData } = params;
-  console.log(startDateTime, endDateTime);
-  console.log(startDateTime, endDateTime);
 
   const andConditions = [];
 
@@ -122,6 +120,7 @@ const getAllSchedulesFromDB = async (
   const whereConditions: Prisma.ScheduleWhereInput =
     andConditions.length > 0 ? { AND: andConditions } : {};
 
+  // find selected schedules and skip them when filtering
   const doctorSchedules = await prisma.doctorSchedules.findMany({
     where: {
       doctor: {
@@ -129,12 +128,18 @@ const getAllSchedulesFromDB = async (
       },
     },
   });
-
-  console.log(doctorSchedules);
+  const doctorScheduleIds = doctorSchedules.map(
+    (schedule) => schedule.scheduleId
+  );
 
   // execute query
   const result = await prisma.schedule.findMany({
-    where: whereConditions,
+    where: {
+      ...whereConditions,
+      id: {
+        notIn: doctorScheduleIds,
+      },
+    },
     skip,
     take: limit,
     orderBy: {
@@ -144,7 +149,12 @@ const getAllSchedulesFromDB = async (
 
   // count total
   const total = await prisma.schedule.count({
-    where: whereConditions,
+    where: {
+      ...whereConditions,
+      id: {
+        notIn: doctorScheduleIds,
+      },
+    },
   });
 
   return {

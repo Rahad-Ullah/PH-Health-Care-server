@@ -4,3 +4,8 @@ export interface ISchedule {
   startTime: string;
   endTime: string;
 }
+
+export interface IDoctorScheduleFilterRequest {
+  startDateTime?: string | undefined;
+  endDateTime?: string | undefined;
+}
