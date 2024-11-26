@@ -47,7 +47,27 @@ const getMySchedules = catchAsync(
   }
 );
 
+
+const deleteDoctorSchedule = catchAsync(
+  async (req: Request & { user?: TAuthUser }, res) => {
+    const user = req.user;
+
+    const result = await DoctorScheduleServices.deleteScheduleFromDB(
+      user as TAuthUser,
+      req.params.id
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "My Schedule deleted successfully",
+      data: result,
+    });
+  }
+);
+
 export const DoctorScheduleControllers = {
   createDoctorSchedule,
   getMySchedules,
+  deleteDoctorSchedule,
 };

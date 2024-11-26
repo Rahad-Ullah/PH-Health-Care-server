@@ -101,7 +101,7 @@ const getMySchedulesFromDB = async (
       })),
     });
   }
-  console.log(filterData);
+
   const whereConditions: Prisma.DoctorSchedulesWhereInput =
     andConditions.length > 0 ? { AND: andConditions } : {};
 
@@ -135,7 +135,56 @@ const getMySchedulesFromDB = async (
   };
 };
 
+
+const deleteScheduleFromDB = async (user: TAuthUser, scheduleId: string) => {
+  // check if the doctor is exists
+  const doctorData = await prisma.doctor.findUniqueOrThrow({
+    where: {
+      email: user?.email,
+    },
+  });
+
+  // check if the schedule is exists
+  await prisma.doctorSchedules.findUniqueOrThrow({
+    where: {
+      doctorId_scheduleId: {
+        doctorId: doctorData.id,
+        scheduleId: scheduleId,
+      },
+    },
+  });
+
+  // check if the schedule is already booked
+  const isScheduleBooked = await prisma.doctorSchedules.findUnique({
+    where: {
+      doctorId_scheduleId: {
+        doctorId: doctorData.id,
+        scheduleId: scheduleId,
+      },
+      isBooked: true,
+    },
+  });
+  if (isScheduleBooked) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Failed to delete! The schedule is already booked."
+    );
+  }
+
+  const result = await prisma.doctorSchedules.delete({
+    where: {
+      doctorId_scheduleId: {
+        doctorId: doctorData.id,
+        scheduleId: scheduleId,
+      },
+    },
+  });
+
+  return result;
+};
+
 export const DoctorScheduleServices = {
   createDoctorScheduleIntoDB,
   getMySchedulesFromDB,
+  deleteScheduleFromDB,
 };
