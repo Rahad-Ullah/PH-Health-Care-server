@@ -9,4 +9,10 @@ router.get("/", auth(UserRole.DOCTOR), scheduleControllers.getAllSchedules);
 
 router.post("/", scheduleControllers.createSchedule);
 
+router.delete(
+  "/:id",
+  auth(UserRole.DOCTOR),
+  scheduleControllers.deleteSchedule
+);
+
 export const ScheduleRoutes = router;

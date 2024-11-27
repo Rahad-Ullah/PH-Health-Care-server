@@ -5,6 +5,8 @@ import { IDoctorScheduleFilterRequest, ISchedule } from "./schedule.interface";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { calculatePagination } from "../../../utils/pagination";
 import { TAuthUser } from "../../interfaces/common";
+import ApiError from "../../errors/ApiError";
+import { StatusCodes } from "http-status-codes";
 
 const createScheduleIntoDB = async (
   payload: ISchedule
@@ -167,7 +169,40 @@ const getAllSchedulesFromDB = async (
   };
 };
 
+const deleteScheduleFromDB = async (user: TAuthUser, id: string) => {
+  // check if schedule exists
+  const schedule = await prisma.schedule.findUnique({
+    where: {
+      id,
+    },
+  });
+  if (!schedule) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Schedule does not exist");
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    // delete from doctor schedules relation
+    await tx.doctorSchedules.deleteMany({
+      where: {
+        scheduleId: id,
+      },
+    });
+
+    // delete schedule
+    const deletedSchedule = await tx.schedule.delete({
+      where: {
+        id,
+      },
+    });
+
+    return deletedSchedule;
+  });
+
+  return result;
+};
+
 export const scheduleServices = {
   createScheduleIntoDB,
   getAllSchedulesFromDB,
+  deleteScheduleFromDB,
 };
