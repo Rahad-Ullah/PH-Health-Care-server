@@ -7,6 +7,12 @@ const router = express.Router();
 
 router.get("/", auth(UserRole.DOCTOR), scheduleControllers.getAllSchedules);
 
+router.get(
+  "/:id",
+  auth(UserRole.DOCTOR),
+  scheduleControllers.getSingleSchedule
+);
+
 router.post("/", scheduleControllers.createSchedule);
 
 router.delete(

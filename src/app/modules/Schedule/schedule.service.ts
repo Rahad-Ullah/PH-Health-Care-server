@@ -169,6 +169,16 @@ const getAllSchedulesFromDB = async (
   };
 };
 
+const getSingleScheduleFromDB = async (id: string) => {
+  const result = await prisma.schedule.findUniqueOrThrow({
+    where: {
+      id,
+    },
+  });
+
+  return result;
+};
+
 const deleteScheduleFromDB = async (user: TAuthUser, id: string) => {
   // check if schedule exists
   const schedule = await prisma.schedule.findUnique({
@@ -204,5 +214,6 @@ const deleteScheduleFromDB = async (user: TAuthUser, id: string) => {
 export const scheduleServices = {
   createScheduleIntoDB,
   getAllSchedulesFromDB,
+  getSingleScheduleFromDB,
   deleteScheduleFromDB,
 };
