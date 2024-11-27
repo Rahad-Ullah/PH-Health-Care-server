@@ -19,7 +19,7 @@ router.get(
 
 router.get(
   "/",
-  auth(UserRole.ADMIN),
+  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.DOCTOR),
   DoctorScheduleControllers.getAllSchedules
 );
 
