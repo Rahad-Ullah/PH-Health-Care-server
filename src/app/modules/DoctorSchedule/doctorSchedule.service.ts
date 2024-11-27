@@ -77,6 +77,12 @@ const getMySchedulesFromDB = async (
     });
   }
 
+  andConditions.push({
+    doctor: {
+      email: user?.email,
+    },
+  });
+
   // filter if filter data specified
   if (Object.keys(filterData).length > 0) {
     // convert filter data to boolean type
@@ -91,7 +97,7 @@ const getMySchedulesFromDB = async (
     ) {
       filterData.isBooked = false;
     }
-    
+
     // push to andcondition array
     andConditions.push({
       AND: Object.keys(filterData).map((field) => ({
@@ -135,6 +141,96 @@ const getMySchedulesFromDB = async (
   };
 };
 
+const getAllSchedulesFromDB = async (
+  params: any,
+  options: IPaginationOptions,
+  user: TAuthUser
+) => {
+  // format params and options information
+  const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+  const { searchTerm, ...filterData } = params;
+
+  const andConditions = [];
+
+  // filter if startDateTime and endDateTime specified
+  if (searchTerm) {
+    andConditions.push({
+      OR: [
+        {
+          doctor: {
+            name: {
+              contains: searchTerm,
+            },
+          },
+        },
+        {
+          doctor: {
+            email: {
+              contains: searchTerm,
+            },
+          },
+        },
+      ],
+    });
+  }
+
+  // filter if filter data specified
+  if (Object.keys(filterData).length > 0) {
+    // convert filter data to boolean type
+    if (
+      typeof filterData.isBooked === "string" &&
+      filterData.isBooked === "true"
+    ) {
+      filterData.isBooked = true;
+    } else if (
+      typeof filterData.isBooked === "string" &&
+      filterData.isBooked === "false"
+    ) {
+      filterData.isBooked = false;
+    }
+
+    // push to andcondition array
+    andConditions.push({
+      AND: Object.keys(filterData).map((field) => ({
+        [field]: {
+          equals: (filterData as any)[field],
+        },
+      })),
+    });
+  }
+
+  const whereConditions: Prisma.DoctorSchedulesWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  // execute query
+  const result = await prisma.doctorSchedules.findMany({
+    where: whereConditions,
+    skip,
+    take: limit,
+    orderBy: {
+      schedule: {
+        startDateTime: (sortOrder as Prisma.SortOrder) || "asc",
+      },
+    },
+    include: {
+      schedule: true,
+    },
+  });
+
+  // count total
+  const total = await prisma.doctorSchedules.count({
+    where: whereConditions,
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: result,
+  };
+};
 
 const deleteScheduleFromDB = async (user: TAuthUser, scheduleId: string) => {
   // check if the doctor is exists
@@ -186,5 +282,6 @@ const deleteScheduleFromDB = async (user: TAuthUser, scheduleId: string) => {
 export const DoctorScheduleServices = {
   createDoctorScheduleIntoDB,
   getMySchedulesFromDB,
+  getAllSchedulesFromDB,
   deleteScheduleFromDB,
 };

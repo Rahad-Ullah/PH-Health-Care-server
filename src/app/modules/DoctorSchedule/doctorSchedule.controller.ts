@@ -47,6 +47,24 @@ const getMySchedules = catchAsync(
   }
 );
 
+const getAllSchedules = catchAsync(
+  async (req: Request & { user?: TAuthUser }, res) => {
+    const filters = pick(req.query, ["isBooked", "searchTerm"]);
+    const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+    const result = await DoctorScheduleServices.getAllSchedulesFromDB(
+      filters,
+      options,
+      req.user as TAuthUser
+    );
+
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: "Schedules retrieved successfully",
+      data: result,
+    });
+  }
+);
 
 const deleteDoctorSchedule = catchAsync(
   async (req: Request & { user?: TAuthUser }, res) => {
@@ -69,5 +87,6 @@ const deleteDoctorSchedule = catchAsync(
 export const DoctorScheduleControllers = {
   createDoctorSchedule,
   getMySchedules,
+  getAllSchedules,
   deleteDoctorSchedule,
 };
