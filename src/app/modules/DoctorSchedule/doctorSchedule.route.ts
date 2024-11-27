@@ -17,7 +17,11 @@ router.get(
   DoctorScheduleControllers.getMySchedules
 );
 
-router.get("/", auth(UserRole.ADMIN), DoctorScheduleControllers.getMySchedules);
+router.get(
+  "/",
+  auth(UserRole.ADMIN),
+  DoctorScheduleControllers.getAllSchedules
+);
 
 router.delete(
   "/:id",

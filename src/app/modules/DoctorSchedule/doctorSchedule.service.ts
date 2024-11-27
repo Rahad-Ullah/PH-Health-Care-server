@@ -160,6 +160,7 @@ const getAllSchedulesFromDB = async (
           doctor: {
             name: {
               contains: searchTerm,
+              mode: Prisma.QueryMode.insensitive,
             },
           },
         },
@@ -167,6 +168,7 @@ const getAllSchedulesFromDB = async (
           doctor: {
             email: {
               contains: searchTerm,
+              mode: Prisma.QueryMode.insensitive,
             },
           },
         },
