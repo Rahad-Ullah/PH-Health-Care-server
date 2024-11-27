@@ -6,6 +6,7 @@ const createAppointmentIntoDB = async (
   user: TAuthUser,
   payload: { doctorId: string; scheduleId: string }
 ) => {
+  // check if the patient exists
   const patientData = await prisma.patient.findUniqueOrThrow({
     where: {
       email: user?.email,
@@ -19,7 +20,8 @@ const createAppointmentIntoDB = async (
     },
   });
 
-  const doctorScheduleData = await prisma.doctorSchedules.findFirstOrThrow({
+  // check if the doctor schedule exists
+  await prisma.doctorSchedules.findFirstOrThrow({
     where: {
       doctorId: doctorData.id,
       scheduleId: payload.scheduleId,
@@ -27,20 +29,39 @@ const createAppointmentIntoDB = async (
     },
   });
 
-  const videoCallingId = uuid4();
+  // generate unique id for video calling
+  const videoCallingId: string = uuid4();
 
-  const result = await prisma.appointment.create({
-    data: {
-      patientId: patientData.id,
-      doctorId: doctorData.id,
-      scheduleId: payload.scheduleId,
-      videoCallingId,
-    },
-    include: {
-      patient: true,
-      doctor: true,
-      schedule: true,
-    },
+  // create a new appointment
+  const result = await prisma.$transaction(async (tx) => {
+    const appointmentData = await tx.appointment.create({
+      data: {
+        patientId: patientData.id,
+        doctorId: doctorData.id,
+        scheduleId: payload.scheduleId,
+        videoCallingId,
+      },
+      include: {
+        patient: true,
+        doctor: true,
+        schedule: true,
+      },
+    });
+
+    await tx.doctorSchedules.update({
+      where: {
+        doctorId_scheduleId: {
+          doctorId: doctorData.id,
+          scheduleId: payload.scheduleId,
+        },
+      },
+      data: {
+        isBooked: true,
+        appointmentId: appointmentData.id,
+      },
+    });
+
+    return appointmentData;
   });
 
   return result;
