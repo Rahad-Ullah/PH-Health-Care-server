@@ -43,7 +43,25 @@ const getMyAppointment = catchAsync(
   }
 );
 
+// get all appointments
+const getAllAppointments = catchAsync(
+  async (req: Request & { user?: TAuthUser }, res) => {
+    const filters = pick(req.query, ["searchTerm", "status", "paymentStatus"]);
+    const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+
+    const result = await AppointmentServices.getAllAppointmentsFromDB(filters, options)
+
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: "Appointments retrieved successfully",
+      data: result,
+    });
+  }
+);
+
 export const AppointmentControllers = {
   createAppointment,
   getMyAppointment,
+  getAllAppointments,
 };

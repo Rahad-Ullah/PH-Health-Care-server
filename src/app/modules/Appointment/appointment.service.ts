@@ -153,7 +153,84 @@ const getMyAppointmentFromDB = async (
   };
 };
 
+// get all appointments
+const getAllAppointmentsFromDB = async (
+  filters: any,
+  options: IPaginationOptions
+) => {
+  // format params and options information
+  const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+  const {searchTerm, ...filterData } = filters;
+
+  const conditions: Prisma.AppointmentWhereInput[] = [];
+
+    // filter based on search term
+    if (searchTerm) {
+      conditions.push({
+        OR: [
+          {
+            patient: {
+              name: {
+                contains: searchTerm,
+                mode: 'insensitive'
+              }
+            }
+          },
+          {
+            doctor: {
+              name: {
+                contains: searchTerm,
+                mode: 'insensitive'
+              }
+            }
+          }
+        ]
+      });
+    }
+
+  // filter if filter data specified
+  if (Object.keys(filterData).length > 0) {
+    conditions.push({
+      AND: Object.keys(filterData).map((key) => ({
+        [key]: {
+          equals: (filterData as any)[key],
+        },
+      })),
+    });
+  }
+
+  // execute query
+  const result = await prisma.appointment.findMany({
+    where: { AND: conditions } as Prisma.AppointmentWhereInput,
+    skip,
+    take: limit,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+    include: {
+      patient: true,
+      doctor: true,
+      schedule: true
+    }
+  });
+
+  // count total
+  const total = await prisma.appointment.count({
+    where: { AND: conditions } as Prisma.AppointmentWhereInput,
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: result,
+  };
+};
+
 export const AppointmentServices = {
   createAppointmentIntoDB,
   getMyAppointmentFromDB,
+  getAllAppointmentsFromDB,
 };

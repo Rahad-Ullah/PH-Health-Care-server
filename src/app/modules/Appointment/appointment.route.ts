@@ -13,6 +13,12 @@ router.get(
   AppointmentControllers.getMyAppointment
 );
 
+router.get(
+  "/",
+  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  AppointmentControllers.getAllAppointments
+);
+
 router.post(
   "/",
   validateRequest(AppointmentValidations.create),
