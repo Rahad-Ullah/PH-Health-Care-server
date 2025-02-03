@@ -257,7 +257,7 @@ const getMyProfileFromDB = async (user: TAuthUser) => {
 
   let profileInfo;
 
-  if (userInfo.role === "SUPER_ADMIN" || "ADMIN") {
+  if (userInfo.role === "SUPER_ADMIN" || userInfo.role === "ADMIN") {
     profileInfo = await prisma.admin.findUnique({
       where: { email: userInfo.email },
     });
@@ -306,7 +306,7 @@ const updateMyProfile = async (user: TAuthUser, req: Request) => {
       data: req.body,
     });
   } else if (userInfo.role === "PATIENT") {
-    updatedData = await prisma.doctor.update({
+    updatedData = await prisma.patient.update({
       where: { email: userInfo.email },
       data: req.body,
     });
